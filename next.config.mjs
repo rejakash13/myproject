@@ -27,7 +27,42 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  reactStrictMode: true,
+  reactStrictMode: false, // Disable strict mode in production to reduce re-renders
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            // Isolate heavy vendor libraries
+            framer: {
+              test: /[\\/]node_modules[\\/](framer-motion)[\\/]/,
+              name: 'framer-motion',
+              priority: 20,
+              reuseExistingChunk: true,
+            },
+            lucide: {
+              test: /[\\/]node_modules[\\/](lucide-react)[\\/]/,
+              name: 'lucide-react',
+              priority: 19,
+              reuseExistingChunk: true,
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendor',
+              priority: 10,
+              reuseExistingChunk: true,
+            },
+          },
+        },
+      }
+    }
+    return config
+  },
   headers: async () => [
     {
       source: '/:path*',
